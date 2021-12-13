@@ -1,5 +1,8 @@
 # Let's c++!
 - [Let's c++!](#lets-c)
+- [C++ Standard Versions](#c-standard-versions)
+  - [C++11](#c11)
+  - [C++17](#c17)
 - [Good practices](#good-practices)
   - [What's better?](#whats-better)
     - [include guards vs #pragma once](#include-guards-vs-pragma-once)
@@ -9,6 +12,56 @@
       - [#pragma once](#pragma-once)
         - [The advantages](#the-advantages-1)
         - [The disadvantages](#the-disadvantages-1)
+# C++ Standard Versions
+Here we'll examine the various interesting ISO C++ standard versions.
+## C++11
+* ***Dynamic Exception Specifications* were deprecated**: Adding `throw(<exception_list>)` to functions' signitures is deprecated. **Some of the reasons**:
+    * It is impossible to specify the exceptions for template functions:
+        ```cpp
+          template<class T>
+          void f(T t)
+          {
+            t.g();
+          }
+        ```
+      `T::g` could throw any exception.
+    * Some functions can throw various number of exceptions, thus the list can be quite long and hard to maintain.
+    E.g: Removing an exception from a method of a base class' exception's specification list could affect all the derived classes'.
+    * May limit compiler optimizations - Consider the following example:
+        ```cpp
+            void f() throw(E1,E2)
+            {
+              g();
+            }
+        ```
+        Functionally the compiler will generate something like:
+        ```cpp
+            void f()
+            {
+              try
+              {
+                g();
+              }
+              catch (E1)
+              {
+                throw;
+              }
+              catch (E2)
+              {
+                throw;
+              }
+              catch (...)
+              {
+                std::unexcpected();
+              }
+            }
+        ```
+        Although it seems the compiler would make optimizations according to the exception specifications, it is just the opposite - It needs to be prepared for the case that your specifications are guaranteed to be the all the exceptions that could be thrown.
+
+## C++17
+* ***Dynamic Exception Specifications* were removed**: See [C++11](#c11) for more details.
+
+
 # Good practices
 ## What's better?
 ### include guards vs #pragma once
