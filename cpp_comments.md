@@ -38,26 +38,54 @@ Here we'll examine the various interesting ISO C++ standard versions.
         ```cpp
             void f()
             {
-              try
-              {
+              try {
                 g();
               }
-              catch (E1)
-              {
+              catch (E1) {
                 throw;
               }
-              catch (E2)
-              {
+              catch (E2) {
                 throw;
               }
-              catch (...)
-              {
+              catch (...) {
                 std::unexcpected();
               }
             }
         ```
         Although it seems the compiler would make optimizations according to the exception specifications, it is just the opposite - It needs to be prepared for the case that your specifications are guaranteed to be the all the exceptions that could be thrown.
-
+* **noexcept** specifier: Specifies whether a function could throw exceptions. It receives a compile-time boolean expression:
+  * `noexcept(false)` - The function may throw exceptions. This is the deafult.
+  * `noexcept`/`noexcept(true)` - The function doesn't throw an exception.
+  
+  Meant to replace the empty exception specification `throw()`. `noexcept` doesn't call `std::unexpected()` like `throw()`, and may not unwind the stack. **Advantages**:
+  * Optimizations
+    * Compilers can assume `noexcept` functions don't need stack unwinding.
+    * E.g: `std::vector` and move semantics - If an element is inserted to a full `std::vector`, a bigger vector needs to be created to replace the old on, so that the new vector will include all the elements from the old vector. One method of doing that is using copy semantics; It's safe, because in case of an exception thrown on an element copy, we can just destroy all the copied elements and free the newly allocated vector. The problem with this method is that it is relatively slow. Another method is to use move semantics; The problem is that in case on an exception thrown on element move, the original vector is in a "broken" state. This method is fater than the copy semantics. In conclusion, methods like `std::vector::push_back` need to check if the element's type's move c'tor is `noexcept`.
+    * Compilers can make some optimizations with `noexcept` functions. E.g:
+      ```cpp
+      void f()
+      {
+        int x = 5;
+        try {
+          g();
+          x = 10;
+        }
+        catch (...) {
+          ...
+        }
+        h(x);
+      }
+      ```
+      If `g` is `noexcept` - The compiler can assume that the body of `catch` is a dead code, because if `g` doesn't throw, the `catch` is not entered, and if `g` does throw, it's in violation of the `noexcept` specifier, thus `std::terminate` is called, and `catch` is not entered. Furthermore, the compiler can assume that `h` will be invoked with `x=10` for the same reasons.
+  * Readability - Assuming a `noexcept` function doesn't throw exceptions, it adds to the function's and program's readability.
+  * Richer than `throw()` - Thanks to the boolean parameter the `noexcept` specifier gets, one can use `is_nothrow_default_constructible` in order to determine if a template function (or class) can rely on a template class `noexcept`ness. 
+      ```cpp
+          template<class T>
+          void f() noexcept(is_nothrow_default_constructible<T>::value)
+          {
+            T t;
+          }
+      ```
 ## C++17
 * ***Dynamic Exception Specifications* were removed**: See [C++11](#c11) for more details.
 
