@@ -59,7 +59,66 @@ Here we'll examine the various interesting ISO C++ standard versions.
   
   Meant to replace the empty exception specification `throw()`. `noexcept` doesn't call `std::unexpected()` like `throw()`, and may not unwind the stack. **Advantages**:
   * Optimizations
-    * Compilers can assume `noexcept` functions don't need stack unwinding.
+    * Compilers can assume `noexcept` functions don't need stack unwinding, saving a lot of compiler work. E.g: using a g++ compiler:
+        ```cpp
+            #include <iostream>
+
+            class A
+            {
+                public:
+                  A() {std::cout << "A()" << std::endl;}
+                  ~A() {std::cout << "~A()" << std::endl;}
+            };
+
+            void f()
+            {
+                A a;
+                throw 1;
+            }
+            void f_throw() throw()
+            {
+                A a;
+                throw 1;
+            }
+            void f_noexcept() noexcept(true)
+            {
+                A a;
+                throw 1;
+            }
+
+            int main()
+            {
+                try{
+                    // f();
+                    // f_throw();
+                    // f_noexcept();
+                }
+                catch(...){
+                    std::cout << "caught" << std::endl;
+                }
+            }
+        ```
+        Running `f`, the output is:
+        ```
+         A()
+         ~A()
+         caught
+        ```
+        Running `f_throw`, the output is:
+        ```
+         A()
+         ~A()
+         caught
+         terminate called after throwing an instance of 'int'
+        ```
+        Running `f_noexcept`, output is:
+        ```
+         A()
+         terminate called after throwing an instance of 'int'
+        ```
+        The compiler decided not to unwind the stack in case of `noexcept`, so the d'tor of `A` doesn't get called. We can only see that the compiler unwound the stack in case of `throw()`.
+        
+        
     * E.g: `std::vector` and move semantics - If an element is inserted to a full `std::vector`, a bigger vector needs to be created to replace the old on, so that the new vector will include all the elements from the old vector. One method of doing that is using copy semantics; It's safe, because in case of an exception thrown on an element copy, we can just destroy all the copied elements and free the newly allocated vector. The problem with this method is that it is relatively slow. Another method is to use move semantics; The problem is that in case on an exception thrown on element move, the original vector is in a "broken" state. This method is fater than the copy semantics. In conclusion, methods like `std::vector::push_back` need to check if the element's type's move c'tor is `noexcept`.
     * Compilers can make some optimizations with `noexcept` functions. E.g:
       ```cpp
