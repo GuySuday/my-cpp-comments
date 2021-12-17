@@ -11,11 +11,14 @@
   - [What's better?](#whats-better)
     - [include guards vs #pragma once](#include-guards-vs-pragma-once)
       - [include guards](#include-guards)
-        - [The advantages](#the-advantages)
-        - [The disadvantages](#the-disadvantages)
+        - [Advantages](#advantages-1)
+        - [Disadvantages](#disadvantages)
       - [#pragma once](#pragma-once)
-        - [The advantages](#the-advantages-1)
-        - [The disadvantages](#the-disadvantages-1)
+        - [Advantages](#advantages-2)
+        - [Disadvantages](#disadvantages-1)
+    - [`std::map` element access: `at()` vs `[]`](#stdmap-element-access-at-vs-)
+      - [When to use `[]` operator](#when-to-use--operator)
+    - [When to use `at()` method](#when-to-use-at-method)
 # C++ Standard Versions
 Here we'll examine the various interesting ISO C++ standard versions.
 ## C++11
@@ -162,7 +165,7 @@ Meant to replace the empty exception specification `throw()`. `noexcept` doesn't
 ### include guards vs #pragma once
 During compilation some header files may be included multiple times, resulting in compilation error: *redefinition of \<symbol\>*. This is inevitable in large projects. So we need a way to insure every header file is included only once.
 
- #### include guards
+#### include guards
 *file.h*:
  ```cpp
 #ifndef HEADER_GUARD_FOR_FILE
@@ -173,28 +176,43 @@ During compilation some header files may be included multiple times, resulting i
  The first time *file.h* is going to be included the `#ifndef HEADER_GUARD_FOR_FILE` condition is going to be true, so the macro `HEADER_GUARD_FOR_FILE` will be defined. \
  Every time after that, `HEADER_GUARD_FOR_FILE` is already defined, so `#ifndef HEADER_GUARD_FOR_FILE` condition is going to be false, thus the code inside this include guard is not going to be included.
 
- ##### The advantages
+##### Advantages
  * Part of the C++ standard
  * Defining a unique macro for the header will ensure that the same file won't clash with other header files
  * Very easy to understand
 
- ##### The disadvantages
+##### Disadvantages
  * Requires to write 3 lines of code for each header file, 2 of each should agree on the same header
 * Defining a unique macro requires manually isn't easy (Many IDEs generate UUID for each header file, solving this problem).
 
 
- #### #pragma once
+#### #pragma once
  This non-standard preprocessor directive serves the same purpose as include guards, but with some improvements.
 * 
  
-  ##### The advantages
+##### Advantages
   * Less code written
   * If done right(*), will prevent macro name clashes
   * On some compilers - Improvments in compilation speed
 
- ##### The disadvantages
+##### Disadvantages
  * Not part of the C++ standard
  * Isn't very easy to understand
  * The compiler needs to identify when two header files are different:
    * By full path: What about symlinks and hardlinks? What about systems that doesn't have the exact concepts of these links?
    * By content: Means that the content, or even a hash of it needs to be compared for all the files that use `#pragma once` - Lower performance.
+
+### `std::map` element access: `at()` vs `[]`
+Element access on `std::map` can be done in 2 ways:
+* Using the `[]` operator - **Access or insert** the specified element. You should 
+* Using the `at()` method - **Access** the specified element with **bounds checking** (throwing `std::out_of_range`).
+
+#### When to use `[]` operator
+This operator might be dangerous to use, as it inserts the specified element if it does not exist, so you should use it with caution. Another problem with this method, is that the map can't be const, as a value may be inserted to it.
+Use it only if:
+* You are prepared for a default initialization of your value in case the key doesn't exist
+* Your map isn't const
+### When to use `at()` method
+The best use of this method is when you know for certain that the key exists in the map. However, you can still use this method even if you are not certain, simply by catching the `std::out_of_range` exception. You can consider several other options for the latter case:
+* Using `find()` to check if the key exists (comparing it to `map::end()`) and then `at()` accordingly
+* Using `count()` and comparing it to `0` and then `at()` accordingly
