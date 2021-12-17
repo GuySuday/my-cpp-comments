@@ -23,7 +23,7 @@
 Here we'll examine the various interesting ISO C++ standard versions.
 ## C++11
 ### *Dynamic Exception Specifications* were deprecated
-Adding `throw(<exception_list>)` to functions' signitures is deprecated.
+Adding `throw(<exception_list>)` to functions' signatures is deprecated.
 #### Reasons
 * It is impossible to specify the exceptions for template functions:
   ```cpp
@@ -64,7 +64,7 @@ E.g: Removing an exception from a method of a base class' exception's specificat
   Although it seems the compiler would make optimizations according to the exception specifications, it is just the opposite - It needs to be prepared for the case that your specifications are guaranteed to be the all the exceptions that could be thrown.
 ### *noexcept* specifier
 Specifies whether a function could throw exceptions. It receives a compile-time boolean expression:
-  * `noexcept(false)` - The function may throw exceptions. This is the deafult.
+  * `noexcept(false)` - The function may throw exceptions. This is the default.
   * `noexcept`/`noexcept(true)` - The function doesn't throw an exception.
   
 Meant to replace the empty exception specification `throw()`. `noexcept` doesn't call `std::unexpected()` like `throw()`, and may not unwind the stack
@@ -129,7 +129,7 @@ Meant to replace the empty exception specification `throw()`. `noexcept` doesn't
     ```
     The compiler decided not to unwind the stack in case of `noexcept`, so the d'tor of `A` doesn't get called. We can only see that the compiler unwound the stack in case of `throw()`.
         
-  * E.g: `std::vector` and move semantics - If an element is inserted to a full `std::vector`, a bigger vector needs to be created to replace the old on, so that the new vector will include all the elements from the old vector. One method of doing that is using copy semantics; It's safe, because in case of an exception thrown on an element copy, we can just destroy all the copied elements and free the newly allocated vector. The problem with this method is that it is relatively slow. Another method is to use move semantics; The problem is that in case on an exception thrown on element move, the original vector is in a "broken" state. This method is fater than the copy semantics. In conclusion, methods like `std::vector::push_back` need to check if the element's type's move c'tor is `noexcept`.
+  * E.g: `std::vector` and move semantics - If an element is inserted to a full `std::vector`, a bigger vector needs to be created to replace the old on, so that the new vector will include all the elements from the old vector. One method of doing that is using copy semantics; It's safe, because in case of an exception thrown on an element copy, we can just destroy all the copied elements and free the newly allocated vector. The problem with this method is that it is relatively slow. Another method is to use move semantics; The problem is that in case on an exception thrown on element move, the original vector is in a "broken" state. This method is faster than the copy semantics. In conclusion, methods like `std::vector::push_back` need to check if the element's type's move c'tor is `noexcept`.
   
   * Compilers can make some optimizations with `noexcept` functions. E.g:
     ```cpp
@@ -193,7 +193,7 @@ During compilation some header files may be included multiple times, resulting i
 ##### Advantages
   * Less code written
   * If done right(*), will prevent macro name clashes
-  * On some compilers - Improvments in compilation speed
+  * On some compilers - Improvements in compilation speed
 
 ##### Disadvantages
  * Not part of the C++ standard
