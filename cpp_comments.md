@@ -6,6 +6,7 @@
       - [Reasons](#reasons)
     - [*noexcept* specifier](#noexcept-specifier)
       - [Advantages](#advantages)
+    - [`using` alias declaration](#using-alias-declaration)
   - [C++17](#c17)
 - [Good practices](#good-practices)
   - [What's better?](#whats-better)
@@ -19,6 +20,10 @@
     - [`std::map` element access: `at()` vs `[]`](#stdmap-element-access-at-vs-)
       - [When to use `[]` operator](#when-to-use--operator)
       - [When to use `at()` method](#when-to-use-at-method)
+    - [`using` (alias declaration) vs `typedef`](#using-alias-declaration-vs-typedef)
+      - [Basic Usage](#basic-usage)
+      - [Function pointers and readability](#function-pointers-and-readability)
+      - [Alias templates](#alias-templates)
 # C++ Standard Versions
 Here we'll examine the various interesting ISO C++ standard versions.
 ## C++11
@@ -156,6 +161,10 @@ Meant to replace the empty exception specification `throw()`. `noexcept` doesn't
     T t;
   }
   ```
+
+### `using` alias declaration
+See [alias declaration vs typedef](#using-alias-declaration-vs-typedef)
+
 ## C++17
 * ***Dynamic Exception Specifications* were removed**: See [Dynamic exception specifications deprecated (C++11)](#dynamic-exception-specifications-were-deprecated) for more details.
 
@@ -217,3 +226,78 @@ Use it only if:
 The best use of this method is when you know for certain that the key exists in the map. However, you can still use this method even if you are not certain, simply by catching the `std::out_of_range` exception. You can also consider several other options for the latter case:
 * Using `find()` to check if the key exists (comparing it to `map::end()`) and then `at()` accordingly
 * Using `count()` and comparing it to `0` and then `at()` accordingly
+
+### `using` (alias declaration) vs `typedef`
+
+#### Basic Usage
+Let's define a new alias for int:
+* Using `typedef`:
+  ```cpp
+  typedef int Pid;
+  ```
+* Using `using`:
+  ```cpp
+  using Pid = int;
+  ```
+One can argue which one is more readable and intuitive:
+  * The alias-declaration definition looks like a variable assignment; E.g: `x = 10` - "Assign to `x` the value of `10`
+  * The `typedef` definition is read like a variable declaration; E.g: `int x` - "Define a new variable from type `int` named `x`".
+
+#### Function pointers and readability
+A better example from a readability perspective, is function pointers:
+Let's define a new function pointer:
+* Using `typedef`:
+  ```cpp
+  typedef void (*FP)(int);
+  ```
+* Using `using`:
+  ```cpp
+  using FP = void (*)(int);
+  ```
+The alias-declaration has a more intuitive flow to the definition - "Define a new alias `FP` to be a function pointer with the following signature". But still, these two examples might not be a compelling reason to use alias-declaration over `typedef`.
+
+#### Alias templates
+Let's say we want to make an alias for a template:
+  * Using `typedef`:
+    ```cpp
+    template<typename T>
+    struct MyMap {
+      typedef std::map<int, std::vector<T>> type;
+    };
+    ```
+    Here `MyMap<T>::type` is an alias for `std::map<int, std::vector<T>>`.
+  * Using `using`:
+    ```cpp
+    template<typename T>
+    using MyMap = std::map<int, std::vector<T>>;
+    ```
+    Here `MyMap<T>` is an alias for `std::map<int, std::vector<T>>`.
+
+As we can see, the `typedef` solution is more of a "hack" than a builtin method - We define an alias inside a template class definition in order to use `T` in that alias.
+
+Another issue that shows the power of the alias-declaration is using your templated-alias inside another template (following the previous definitions):
+  * Using `typedef`:
+    ```cpp
+    template<typename T>
+    struct A {
+      typename MyMap<T>::type map;
+    };
+    ```
+    Why must we specify the keyword `typename` before the definition of the instance variable `map`? The compiler can't know for certain that `MyMap<T>::type` is a type, and not value; There can be one specialization of `MyMap` where `type` will be evaluated to a value and not a type. E.g:
+    ```cpp
+      class A { };
+      template<>
+      struct MyMap<A> {
+        int type;
+      }
+    ```
+    So the compiler can't know what it should be prepared for - a type or a value. That's where the programmer steps in and specify `typename` to clear the uncertainty. This happens because `MyMap<T>::type` is a [dependent type](https://en.cppreference.com/w/cpp/language/dependent_name).
+  * Using `using`:
+    ```cpp
+    template<typename T>
+    struct A {
+      MyMap<T> map;
+    };
+    ```
+    Comparing to the `typedef` definition, it is shorter and with less overhead. But why doesn't `MyMap<T>` is a dependent type on this case like it was on the `typedef` definition? Well that's because `MyMap<T>` was defined as an alias template, and thus must name a type and not a value.
+
