@@ -18,7 +18,7 @@
         - [Disadvantages](#disadvantages-1)
     - [`std::map` element access: `at()` vs `[]`](#stdmap-element-access-at-vs-)
       - [When to use `[]` operator](#when-to-use--operator)
-    - [When to use `at()` method](#when-to-use-at-method)
+      - [When to use `at()` method](#when-to-use-at-method)
 # C++ Standard Versions
 Here we'll examine the various interesting ISO C++ standard versions.
 ## C++11
@@ -212,7 +212,8 @@ This operator might be dangerous to use, as it inserts the specified element if 
 Use it only if:
 * You are prepared for a default initialization of your value in case the key doesn't exist
 * Your map isn't const
-### When to use `at()` method
-The best use of this method is when you know for certain that the key exists in the map. However, you can still use this method even if you are not certain, simply by catching the `std::out_of_range` exception. You can consider several other options for the latter case:
+  
+#### When to use `at()` method
+The best use of this method is when you know for certain that the key exists in the map. However, you can still use this method even if you are not certain, simply by catching the `std::out_of_range` exception. You can also consider several other options for the latter case:
 * Using `find()` to check if the key exists (comparing it to `map::end()`) and then `at()` accordingly
 * Using `count()` and comparing it to `0` and then `at()` accordingly
